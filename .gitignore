@@ -1,7 +1,7 @@
 # Mac OS X files
 .DS_Store
 .env
-env.yaml
+.env.yml
 .idea/
 .vscode/
 .history/

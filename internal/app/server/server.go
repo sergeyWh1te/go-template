@@ -16,6 +16,16 @@ const (
 	defaultIdleTimeout  = 60 * time.Second
 )
 
+type app struct {
+	// add dependecies here
+	// logger
+	// metrics
+}
+
+func New() *app {
+	return &app{}
+}
+
 func RunHTTPServer(ctx context.Context, appPort uint, router http.Handler) error {
 	server := &http.Server{
 		Addr:           fmt.Sprintf(`:%d`, appPort),
