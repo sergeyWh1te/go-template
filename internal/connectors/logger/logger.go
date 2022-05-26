@@ -4,8 +4,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/evalphobia/logrus_sentry"
+	"github.com/sirupsen/logrus"
 
 	"github.com/lidofinance/go-template/internal/env"
 )
@@ -23,8 +23,9 @@ func New(cfg *env.AppConfig) (*logrus.Logger, error) {
 	onceDefaultClient.Do(func() {
 		logger = logrus.StandardLogger()
 
-		logLevel, err := logrus.ParseLevel(cfg.LogLevel)
-		if err != nil {
+		logLevel, levelErr := logrus.ParseLevel(cfg.LogLevel)
+		if levelErr != nil {
+			err = levelErr
 			return
 		}
 
@@ -38,14 +39,15 @@ func New(cfg *env.AppConfig) (*logrus.Logger, error) {
 		logger.SetOutput(os.Stdout)
 
 		if cfg.SentryDsn != "" {
-			hook, err := logrus_sentry.NewSentryHook(cfg.SentryDsn, []logrus.Level{
+			hook, hookErr := logrus_sentry.NewSentryHook(cfg.SentryDsn, []logrus.Level{
 				logrus.PanicLevel,
 				logrus.FatalLevel,
 				logrus.ErrorLevel,
 			})
 
-			if err != nil {
-				return 	
+			if hookErr != nil {
+				err = hookErr
+				return
 			}
 
 			logger.Hooks.Add(hook)

@@ -15,7 +15,7 @@ type Config struct {
 type AppConfig struct {
 	Name      string
 	Env       string
-	Url       string
+	URL       string
 	Port      uint
 	LogFormat string
 	LogLevel  string
@@ -43,8 +43,8 @@ func Read(ctx context.Context) (*Config, error) {
 
 	onceDefaultClient.Do(func() {
 		viper.SetConfigName(".env")
-		viper.AddConfigPath(".") 
-	
+		viper.AddConfigPath(".")
+
 		if err = viper.ReadInConfig(); err != nil {
 			return
 		}
@@ -53,7 +53,7 @@ func Read(ctx context.Context) (*Config, error) {
 			AppConfig: AppConfig{
 				Name:      viper.GetString("app.name"),
 				Env:       viper.GetString("app.env"),
-				Url:       viper.GetString("app.url"),
+				URL:       viper.GetString("app.url"),
 				Port:      viper.GetUint("app.port"),
 				LogFormat: viper.GetString("app.logFormat"),
 				LogLevel:  viper.GetString("app.logLevel"),

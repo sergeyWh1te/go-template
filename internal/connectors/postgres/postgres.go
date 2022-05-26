@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v4/stdlib" // justifying it
 	"github.com/jmoiron/sqlx"
 
 	"github.com/lidofinance/go-template/internal/env"
@@ -37,7 +37,6 @@ func Connect(config env.PgConfig) (*sqlx.DB, error) {
 	conf.PreferSimpleProtocol = true
 	conf.RuntimeParams = map[string]string{
 		"standard_conforming_strings": "on",
-		"timezone":                    "GMT",
 	}
 
 	onceDefaultClient.Do(func() {

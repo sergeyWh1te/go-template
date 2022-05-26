@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/lidofinance/go-template/internal/connectors/metrics"
 )
 
 const (
@@ -16,14 +18,18 @@ const (
 	defaultIdleTimeout  = 60 * time.Second
 )
 
-type app struct {
-	// add dependecies here
-	// logger
-	// metrics
+type App struct {
+	Metrics *metrics.Store
+	usecase *usecase
+	repo    *repository
 }
 
-func New() *app {
-	return &app{}
+func New(metrics *metrics.Store, usecase *usecase, repo *repository) *App {
+	return &App{
+		Metrics: metrics,
+		usecase: usecase,
+		repo:    repo,
+	}
 }
 
 func RunHTTPServer(ctx context.Context, appPort uint, router http.Handler) error {
