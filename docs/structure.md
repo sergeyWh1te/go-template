@@ -1,6 +1,7 @@
 More full information about how to struct your go.app you can find here https://github.com/golang-standards/project-layout
 
 my-awesome-go-project
+```text
 |
 └───api
 |  
@@ -142,5 +143,6 @@ my-awesome-go-project
 |   app.toml
 │   README.md
 │   robots.txt    
-│   Makefile   
+│   Makefile  
+  ``` 
 
