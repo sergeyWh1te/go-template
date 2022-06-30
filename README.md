@@ -21,7 +21,7 @@ go-skeleton-lido
 ```
 
 ## Where I have to start add my handler ?
-Here: /internal/pkg/your_package_name/. Just see an example with user_package.
+Here: /internal/pkg/your_package_name/. Just see an example with [User package](./internal/pkg/users)
 
 ## Docs and rules
 1. [App structure layout](./docs/structure.md)
