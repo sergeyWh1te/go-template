@@ -30,3 +30,10 @@ go-skeleton-lido
 ## Docs and rules
 1. [App structure layout](./docs/structure.md)
 2. [Code style](./docs/code_style.md)
+
+## Current drivers or dependencies
+1. Postgres - [pgx](https://github.com/jackc/pgx)
+2. Logger - [Logrus](https://github.com/sirupsen/logrus)
+3. Mockery [Mockery](https://github.com/vektra/mockery)
+4. Http router [gorilla_mux](github.com/gorilla/mux). Of course your can change it for example to [Gin](https://github.com/gin-gonic/gin)
+5. Env reader [Viper](https://github.com/spf13/viper)
