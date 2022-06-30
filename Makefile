@@ -1,17 +1,21 @@
 #!make
 POSTGRESQL_URL := postgres://postgres:postgres@localhost:5432/master?sslmode=disable
 
+### GO tools
 tools:
 	cd tools && go mod tidy && go mod vendor && go mod verify && go generate -tags tools
-.PHONY: tools	
+.PHONY: tools
+
+build:
+	go build ./cmd/service
 
 vendor:
 	go mod tidy && go mod vendor && go mod verify
-.PHONY: vendor	
+.PHONY: vendor
 
 build:
 	go build -o ./bin/service ./cmd/service
-.PHONY: build	
+.PHONY: build
 
 fmt:
 	go vet ./cmd/... && fmt ./internal/...
@@ -20,14 +24,18 @@ vet:
 	go vet ./cmd/... && fmt ./internal/...
 
 imports:
-	bin/goimports -local github.com/lidofinance/go-template -w -d $(shell find . -type f -name '*.go'| grep -v "/vendor/\|/.git/\|/tools/")
+	bin/goimports -local github.com/lidofinance/<your-project-name> -w -d $(shell find . -type f -name '*.go'| grep -v "/vendor/\|/.git/\|/tools/")
 
 lint:
 	bin/golangci-lint run --config=.golangci.yml --fix ./...
 
-full-lint: imports fmt vet lint	
-.PHONY: full-lint	
+full-lint: imports fmt vet lint
+.PHONY: full-lint
 
+full-lint: imports fmt vet lint
+.PHONY: full-lint
+
+### Migrations
 .PHONY: rollback
 rollback:
 	bin/migrate -database ${POSTGRESQL_URL} -path db/migrations down
@@ -38,8 +46,16 @@ migrate:
 
 .PHONY: up
 up:
-	docker-compose -f docker-compose.yml up -d
+	UID_GID="$(id -u):$(id -g)" docker-compose -f docker-compose.yml up -d
+
+.PHONY: up-rebuild
+up-rebuild:
+	UID_GID="$(id -u):$(id -g)" docker-compose -f docker-compose.yml up -d --build <your-project-name>
 
 .PHONY: down
 down:
-	docker-compose -f docker-compose.yml down
+	UID_GID="$(id -u):$(id -g)" docker-compose -f docker-compose.yml down
+
+.PHONY: run
+run:
+	make up && make migrate
