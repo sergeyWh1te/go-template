@@ -5,13 +5,13 @@ import (
 	"net/http"
 )
 
-type Handler struct{}
+type handler struct{}
 
-func New() *Handler {
-	return &Handler{}
+func New() *handler {
+	return &handler{}
 }
 
-func (h *Handler) Handler(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Handler(w http.ResponseWriter, r *http.Request) {
 	type resp struct {
 		Status string `json:"status"`
 	}

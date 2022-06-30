@@ -6,24 +6,29 @@ import (
 	"net/http"
 
 	"github.com/lidofinance/go-template/internal/pkg/users"
+	"github.com/lidofinance/go-template/internal/utils/deps"
 )
 
-type Handler struct {
+type handler struct {
+	log    deps.Logger
 	userUc users.Usecase
 }
 
-func New(userUc users.Usecase) *Handler {
-	return &Handler{
+func New(log deps.Logger, userUc users.Usecase) *handler {
+	return &handler{
+		log:    log,
 		userUc: userUc,
 	}
 }
 
-func (h *Handler) Handler(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	user, err := h.userUc.Get(r.Context(), int64(1))
 	if err != nil {
+		h.log.Error(fmt.Errorf(`some eror %w`, err))
+
 		fmt.Fprint(w, "user not found")
 		return
 	}

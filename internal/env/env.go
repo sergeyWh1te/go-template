@@ -42,11 +42,16 @@ func Read(ctx context.Context) (*Config, error) {
 	var err error
 
 	onceDefaultClient.Do(func() {
-		viper.SetConfigName(".env")
+		viper.SetConfigType("env")
 		viper.AddConfigPath(".")
+		viper.SetConfigFile(".env")
 
-		if err = viper.ReadInConfig(); err != nil {
-			return
+		viper.AutomaticEnv()
+		if viperErr := viper.ReadInConfig(); err != nil {
+			if _, ok := viperErr.(viper.ConfigFileNotFoundError); !ok {
+				err = viperErr
+				return
+			}
 		}
 
 		cfg = Config{

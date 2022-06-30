@@ -17,5 +17,5 @@ func (app *App) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/health", health.New().Handler).Methods(http.MethodGet)
 	router.Handle("/metrics", promhttp.HandlerFor(app.Metrics.Prometheus, promhttp.HandlerOpts{})).Methods(http.MethodGet)
 
-	router.HandleFunc("/example", userexample.New(app.usecase.User).Handler).Methods(http.MethodGet)
+	router.HandleFunc("/example", userexample.New(app.Logger, app.usecase.User).Handler).Methods(http.MethodGet)
 }

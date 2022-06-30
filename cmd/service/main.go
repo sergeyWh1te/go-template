@@ -47,7 +47,7 @@ func main() {
 	repo := server.Repository(db)
 	usecase := server.Usecase(repo)
 
-	app := server.New(metrics, usecase, repo)
+	app := server.New(log, metrics, usecase, repo)
 
 	app.Metrics.BuildInfo.Inc()
 	app.RegisterRoutes(r)
