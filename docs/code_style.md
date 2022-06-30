@@ -75,7 +75,7 @@
   }
   ```
 
-## Сравнение и ветвление
+## Comparison and branching
 
 * When checking a string for [not]emptiness, it is recommended to compare it with an empty string literal
   ```go

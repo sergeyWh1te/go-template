@@ -16,5 +16,5 @@ go-skeleton-lido
  ./bin/migrate create -ext=sql -dir=db/migrations <your table name>
 
 ## Docs and rules
-1. [App_structure layout](./docs/structure.md) of project structure layout
+1. [App structure layout](./docs/structure.md)
 2. [Code style](./docs/code_style.md)
