@@ -34,7 +34,7 @@ linters-settings:
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
-    local-prefixes: go.avito.ru/au/service-booking
+    local-prefixes: github.com/sergeyWh1te/go-template
 
 linters:
   disable-all: true

@@ -24,7 +24,7 @@ vet:
 	go vet ./cmd/... && fmt ./internal/...
 
 imports:
-	bin/goimports -local github.com/lidofinance/<your-project-name> -w -d $(shell find . -type f -name '*.go'| grep -v "/vendor/\|/.git/\|/tools/")
+	bin/goimports -local github.com/sergeyWh1te/go-template -w -d $(shell find . -type f -name '*.go'| grep -v "/vendor/\|/.git/\|/tools/")
 
 lint:
 	bin/golangci-lint run --config=.golangci.yml --fix ./...

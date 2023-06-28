@@ -3,7 +3,7 @@ package users
 import (
 	"context"
 
-	"github.com/lidofinance/go-template/internal/pkg/users/entity"
+	"github.com/sergeyWh1te/go-template/internal/pkg/users/entity"
 )
 
 //go:generate ./../../../bin/mockery --name Repository

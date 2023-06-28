@@ -7,7 +7,7 @@ import (
 	"github.com/evalphobia/logrus_sentry"
 	"github.com/sirupsen/logrus"
 
-	"github.com/lidofinance/go-template/internal/env"
+	"github.com/sergeyWh1te/go-template/internal/env"
 )
 
 var (

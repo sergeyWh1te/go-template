@@ -10,7 +10,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // justifying it
 	"github.com/jmoiron/sqlx"
 
-	"github.com/lidofinance/go-template/internal/env"
+	"github.com/sergeyWh1te/go-template/internal/env"
 )
 
 var (

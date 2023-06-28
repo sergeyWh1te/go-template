@@ -6,8 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
-	"github.com/lidofinance/go-template/internal/http/handlers/health"
-	userexample "github.com/lidofinance/go-template/internal/http/handlers/user_example"
+	"github.com/sergeyWh1te/go-template/internal/http/handlers/health"
+	userexample "github.com/sergeyWh1te/go-template/internal/http/handlers/user_example"
 )
 
 func (app *App) RegisterRoutes(r chi.Router) {

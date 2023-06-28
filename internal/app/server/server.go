@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lidofinance/go-template/internal/connectors/metrics"
+	"github.com/sergeyWh1te/go-template/internal/connectors/metrics"
 	"github.com/sirupsen/logrus"
 )
 

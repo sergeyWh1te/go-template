@@ -5,8 +5,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/lidofinance/go-template/internal/pkg/users"
-	"github.com/lidofinance/go-template/internal/pkg/users/entity"
+	"github.com/sergeyWh1te/go-template/internal/pkg/users"
+	"github.com/sergeyWh1te/go-template/internal/pkg/users/entity"
 )
 
 type repo struct {
