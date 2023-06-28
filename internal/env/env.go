@@ -56,22 +56,22 @@ func Read(ctx context.Context) (*Config, error) {
 
 		cfg = Config{
 			AppConfig: AppConfig{
-				Name:      viper.GetString("app.name"),
-				Env:       viper.GetString("app.env"),
+				Name:      viper.GetString("APP_NAME"),
+				Env:       viper.GetString("ENV"),
 				URL:       viper.GetString("app.url"),
-				Port:      viper.GetUint("app.port"),
-				LogFormat: viper.GetString("app.logFormat"),
-				LogLevel:  viper.GetString("app.logLevel"),
-				SentryDsn: viper.GetString("app.sentryDsn"),
+				Port:      viper.GetUint("PORT"),
+				LogFormat: viper.GetString("LOG_FORMAT"),
+				LogLevel:  viper.GetString("LOG_LEVEL"),
+				SentryDsn: viper.GetString("SENTRY_DSN"),
 			},
 			PgConfig: PgConfig{
-				Port:     viper.GetUint("pg.port"),
-				Host:     viper.GetString("pg.host"),
-				Username: viper.GetString("pg.username"),
-				Password: viper.GetString("pg.password"),
-				Database: viper.GetString("pg.database"),
-				Schema:   viper.GetString("pg.schema"),
-				SslMode:  viper.GetString("pg.sslmode"),
+				Port:     viper.GetUint("PG_PORT"),
+				Host:     viper.GetString("PG_HOST"),
+				Username: viper.GetString("PG_USERNAME"),
+				Password: viper.GetString("PG_PASSWORD"),
+				Database: viper.GetString("PG_DATABASE"),
+				Schema:   viper.GetString("PG_SCHEMA"),
+				SslMode:  viper.GetString("PG_SSLMODE"),
 			},
 		}
 	})

@@ -1,21 +1,23 @@
 package server
 
 import (
-	"net/http"
-
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
 
 	"github.com/lidofinance/go-template/internal/http/handlers/health"
 	userexample "github.com/lidofinance/go-template/internal/http/handlers/user_example"
 )
 
-func (app *App) RegisterRoutes(router *mux.Router) {
-	handlers.RecoveryHandler()(router)
+func (app *App) RegisterRoutes(r chi.Router) {
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-	router.HandleFunc("/health", health.New().Handler).Methods(http.MethodGet)
-	router.Handle("/metrics", promhttp.HandlerFor(app.Metrics.Prometheus, promhttp.HandlerOpts{})).Methods(http.MethodGet)
+	r.Get("/health", health.New().Handler)
+	r.Method(http.MethodGet, "/metrics", promhttp.HandlerFor(app.Metrics.Prometheus, promhttp.HandlerOpts{}))
 
-	router.HandleFunc("/example", userexample.New(app.Logger, app.usecase.User).Handler).Methods(http.MethodGet)
+	r.Get("/example", userexample.New(app.Logger, app.usecase.User).Handler)
 }

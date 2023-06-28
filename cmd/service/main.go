@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"os"
 
-	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/lidofinance/go-template/internal/app/server"
@@ -41,7 +41,7 @@ func main() {
 
 	log.Info(fmt.Sprintf(`started %s application`, cfg.AppConfig.Name))
 
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 	metrics := metrics.New(prometheus.NewRegistry(), cfg.AppConfig.Name, cfg.AppConfig.Env)
 
 	repo := server.Repository(db)
