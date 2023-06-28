@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/sergeyWh1te/go-template/internal/app/http_server"
 	"github.com/sergeyWh1te/go-template/internal/connectors/logger"
@@ -54,9 +56,30 @@ func main() {
 	app.Metrics.BuildInfo.Inc()
 	app.RegisterRoutes(r)
 
+	if err := someDaemon(ctx); err != nil {
+		fmt.Println("someDaemon error", err)
+	}
+
 	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
 		println(err.Error())
 	}
 
 	fmt.Println(`Main done`)
+}
+
+func someDaemon(ctx context.Context) error {
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		for {
+			select {
+			case <-time.After(1 * time.Second):
+				fmt.Println(2)
+			case <-gCtx.Done():
+				return nil
+			}
+		}
+	})
+
+	return g.Wait()
 }
