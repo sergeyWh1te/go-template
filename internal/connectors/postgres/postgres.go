@@ -5,9 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
-	_ "github.com/jackc/pgx/v4/stdlib" // justifying it
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/sergeyWh1te/go-template/internal/env"
@@ -24,27 +23,24 @@ const (
 )
 
 func Connect(config env.PgConfig) (*sqlx.DB, error) {
-
 	conf, parseErr := pgx.ParseConfig(
-		fmt.Sprintf(`host=%s port=%d user=%s password=%s dbname=%s sslmode=%s`,
-			config.Host, config.Port, config.Username, config.Password, config.Database, config.SslMode),
+		fmt.Sprintf(`host=%s port=%d user=%s password=%s dbname=%s sslmode=%s simple_protocol=%t`,
+			config.Host, config.Port, config.Username, config.Password, config.Database, config.SslMode, true),
 	)
 
 	if parseErr != nil {
 		return nil, parseErr
 	}
 
-	conf.PreferSimpleProtocol = true
 	conf.RuntimeParams = map[string]string{
 		"standard_conforming_strings": "on",
 	}
 
+	var err error
 	onceDefaultClient.Do(func() {
 		db = sqlx.NewDb(stdlib.OpenDB(*conf), "pgx")
 
-		// force a connection and test that it worked
-		err := db.Ping()
-		if err != nil {
+		if err = db.Ping(); err != nil {
 			return
 		}
 
@@ -52,5 +48,5 @@ func Connect(config env.PgConfig) (*sqlx.DB, error) {
 		db.SetMaxIdleConns(MaxIdleConns)
 	})
 
-	return db, nil
+	return db, err
 }

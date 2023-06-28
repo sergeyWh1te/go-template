@@ -6,9 +6,6 @@ tools:
 	cd tools && go mod tidy && go mod vendor && go mod verify && go generate -tags tools
 .PHONY: tools
 
-build:
-	go build ./cmd/service
-
 vendor:
 	go mod tidy && go mod vendor && go mod verify
 .PHONY: vendor
@@ -18,16 +15,16 @@ build:
 .PHONY: build
 
 fmt:
-	go vet ./cmd/... && fmt ./internal/...
+	go fmt ./cmd/... && go fmt ./internal/...
 
 vet:
-	go vet ./cmd/... && fmt ./internal/...
+	go vet ./cmd/... && go vet ./internal/...
 
 imports:
 	bin/goimports -local github.com/sergeyWh1te/go-template -w -d $(shell find . -type f -name '*.go'| grep -v "/vendor/\|/.git/\|/tools/")
 
 lint:
-	bin/golangci-lint run --config=.golangci.yml --fix ./...
+	bin/golangci-lint run --config=.golangci.yml --fix ./cmd... ./internal/...
 
 full-lint: imports fmt vet lint
 .PHONY: full-lint

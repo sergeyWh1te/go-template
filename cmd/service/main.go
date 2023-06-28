@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/sergeyWh1te/go-template/internal/app/http_server"
+	server "github.com/sergeyWh1te/go-template/internal/app/http_server"
 	"github.com/sergeyWh1te/go-template/internal/connectors/logger"
 	"github.com/sergeyWh1te/go-template/internal/connectors/metrics"
 	"github.com/sergeyWh1te/go-template/internal/connectors/postgres"
@@ -39,6 +40,11 @@ func main() {
 	if errDB != nil {
 		log.Fatalf("Connect db error: %s", errDB.Error())
 	}
+	defer func(db *sqlx.DB) {
+		if err := db.Close(); err != nil {
+			log.Errorf("Could not close db connection: %s", err.Error())
+		}
+	}(db)
 
 	log.Info(fmt.Sprintf(`started %s application`, cfg.AppConfig.Name))
 
@@ -58,7 +64,7 @@ func main() {
 	}
 
 	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
-		log.Errorf("RunHTTPServer error: %s", err.Error())
+		log.Infof("RunHTTPServer error: %s", err.Error())
 	}
 
 	fmt.Println(`Main done`)
