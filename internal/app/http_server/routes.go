@@ -13,7 +13,7 @@ import (
 	userexample "github.com/sergeyWh1te/go-template/internal/http/handlers/user_example"
 )
 
-func (app *App) RegisterRoutes(r chi.Router) {
+func (a *App) RegisterRoutes(r chi.Router) {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -22,5 +22,5 @@ func (app *App) RegisterRoutes(r chi.Router) {
 	r.Get("/health", health.New().Handler)
 	r.Method(http.MethodGet, "/metrics", promhttp.Handler())
 
-	r.Get("/example", userexample.New(app.Logger, app.usecase.User).Handler)
+	r.Get("/example", userexample.New(a.Logger, a.usecase.User).Handler)
 }

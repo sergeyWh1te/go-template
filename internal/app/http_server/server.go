@@ -34,7 +34,7 @@ func New(logger *logrus.Logger, metrics *metrics.Store, usecase *usecase, repo *
 	}
 }
 
-func RunHTTPServer(ctx context.Context, g *errgroup.Group, appPort uint, router http.Handler) {
+func (a *App) RunHTTPServer(ctx context.Context, g *errgroup.Group, appPort uint, router http.Handler) {
 	server := &http.Server{
 		Addr:           fmt.Sprintf(`:%d`, appPort),
 		Handler:        router,

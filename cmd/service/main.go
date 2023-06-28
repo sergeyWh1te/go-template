@@ -62,7 +62,7 @@ func main() {
 
 	g, gCtx := errgroup.WithContext(ctx)
 
-	server.RunHTTPServer(gCtx, g, cfg.AppConfig.Port, r)
+	app.RunHTTPServer(gCtx, g, cfg.AppConfig.Port, r)
 	someDaemon(gCtx, g)
 
 	if err := g.Wait(); err != nil {
