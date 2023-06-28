@@ -24,7 +24,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	cfg, envErr := env.Read(ctx)
+	cfg, envErr := env.Read()
 	if envErr != nil {
 		fmt.Println("Read env error:", envErr.Error())
 		return
@@ -39,6 +39,7 @@ func main() {
 	db, errDB := postgres.Connect(cfg.PgConfig)
 	if errDB != nil {
 		log.Fatalf("Connect db error: %s", errDB.Error())
+		return
 	}
 	defer func(db *sqlx.DB) {
 		if err := db.Close(); err != nil {
@@ -59,9 +60,9 @@ func main() {
 	app.Metrics.BuildInfo.Inc()
 	app.RegisterRoutes(r)
 
-	if err := someDaemon(ctx); err != nil {
-		log.Errorf("someDaemon error: %s", err.Error())
-	}
+	// if err := someDaemon(ctx); err != nil {
+	//	log.Errorf("someDaemon error: %s", err.Error())
+	// }
 
 	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
 		log.Infof("RunHTTPServer error: %s", err.Error())

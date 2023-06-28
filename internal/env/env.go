@@ -1,7 +1,6 @@
 package env
 
 import (
-	"context"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -38,7 +37,7 @@ var (
 	onceDefaultClient sync.Once
 )
 
-func Read(ctx context.Context) (*Config, error) {
+func Read() (*Config, error) {
 	var err error
 
 	onceDefaultClient.Do(func() {

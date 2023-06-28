@@ -22,6 +22,11 @@ const (
 	MaxIdleConns = 60 * int(time.Second)
 )
 
+func DatabaseURI(config env.PgConfig) string {
+	return fmt.Sprintf(`postgres://%s:%s@%s:%d/%s?sslmode=%s`,
+		config.Username, config.Password, config.Host, config.Port, config.Database, config.SslMode)
+}
+
 func Connect(config env.PgConfig) (*sqlx.DB, error) {
 	conf, parseErr := pgx.ParseConfig(
 		fmt.Sprintf(`host=%s port=%d user=%s password=%s dbname=%s sslmode=%s simple_protocol=%t`,
