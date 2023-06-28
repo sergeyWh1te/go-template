@@ -25,22 +25,19 @@ func main() {
 
 	cfg, envErr := env.Read(ctx)
 	if envErr != nil {
-		println("Read env error:", envErr.Error())
-
-		os.Exit(1)
-	}
-
-	db, errDB := postgres.Connect(cfg.PgConfig)
-	if errDB != nil {
-		println("Connect db error:", errDB.Error())
-		os.Exit(1)
+		fmt.Println("Read env error:", envErr.Error())
+		return
 	}
 
 	log, logErr := logger.New(&cfg.AppConfig)
 	if logErr != nil {
-		println("Logger error:", logErr.Error())
+		fmt.Println("Logger error:", logErr.Error())
+		return
+	}
 
-		os.Exit(1)
+	db, errDB := postgres.Connect(cfg.PgConfig)
+	if errDB != nil {
+		log.Fatalf("Connect db error: %s", errDB.Error())
 	}
 
 	log.Info(fmt.Sprintf(`started %s application`, cfg.AppConfig.Name))
@@ -57,11 +54,11 @@ func main() {
 	app.RegisterRoutes(r)
 
 	if err := someDaemon(ctx); err != nil {
-		fmt.Println("someDaemon error", err)
+		log.Errorf("someDaemon error: %s", err.Error())
 	}
 
 	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
-		println(err.Error())
+		log.Errorf("RunHTTPServer error: %s", err.Error())
 	}
 
 	fmt.Println(`Main done`)
