@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/sergeyWh1te/go-template/internal/app/server"
+	"github.com/sergeyWh1te/go-template/internal/app/http_server"
 	"github.com/sergeyWh1te/go-template/internal/connectors/logger"
 	"github.com/sergeyWh1te/go-template/internal/connectors/metrics"
 	"github.com/sergeyWh1te/go-template/internal/connectors/postgres"
@@ -16,8 +18,8 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
 
 	cfg, envErr := env.Read(ctx)
 	if envErr != nil {
@@ -53,6 +55,8 @@ func main() {
 	app.RegisterRoutes(r)
 
 	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
-		println(err)
+		println(err.Error())
 	}
+
+	fmt.Println(`Main done`)
 }

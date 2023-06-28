@@ -1,10 +1,11 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
 
 	"github.com/sergeyWh1te/go-template/internal/http/handlers/health"
 	userexample "github.com/sergeyWh1te/go-template/internal/http/handlers/user_example"
