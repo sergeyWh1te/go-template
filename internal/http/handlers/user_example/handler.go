@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lidofinance/go-template/internal/pkg/users"
-	"github.com/lidofinance/go-template/internal/utils/deps"
+	"github.com/sergeyWh1te/go-template/internal/pkg/users"
+	"github.com/sergeyWh1te/go-template/internal/utils/deps"
 )
 
 type handler struct {

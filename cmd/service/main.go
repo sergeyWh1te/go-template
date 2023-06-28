@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"os"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/lidofinance/go-template/internal/app/server"
-	"github.com/lidofinance/go-template/internal/connectors/logger"
-	"github.com/lidofinance/go-template/internal/connectors/metrics"
-	"github.com/lidofinance/go-template/internal/connectors/postgres"
-	"github.com/lidofinance/go-template/internal/env"
+	"github.com/sergeyWh1te/go-template/internal/app/server"
+	"github.com/sergeyWh1te/go-template/internal/connectors/logger"
+	"github.com/sergeyWh1te/go-template/internal/connectors/metrics"
+	"github.com/sergeyWh1te/go-template/internal/connectors/postgres"
+	"github.com/sergeyWh1te/go-template/internal/env"
 )
 
 func main() {

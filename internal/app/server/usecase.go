@@ -1,15 +1,15 @@
 package server
 
 import (
-	"github.com/lidofinance/go-template/internal/pkg/users"
-	usersUsecase "github.com/lidofinance/go-template/internal/pkg/users/usecase"
+	"github.com/sergeyWh1te/go-template/internal/pkg/users"
+	usersUsecase "github.com/sergeyWh1te/go-template/internal/pkg/users/usecase"
 )
 
 type usecase struct {
 	User users.Usecase
 }
 
-//nolint
+// nolint
 func Usecase(
 	repo *repository,
 ) *usecase {
