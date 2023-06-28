@@ -34,9 +34,7 @@ func New(logger *logrus.Logger, metrics *metrics.Store, usecase *usecase, repo *
 	}
 }
 
-func RunHTTPServer(ctx context.Context, appPort uint, router http.Handler) error {
-	g, gCtx := errgroup.WithContext(ctx)
-
+func RunHTTPServer(ctx context.Context, g *errgroup.Group, appPort uint, router http.Handler) {
 	server := &http.Server{
 		Addr:           fmt.Sprintf(`:%d`, appPort),
 		Handler:        router,
@@ -51,9 +49,7 @@ func RunHTTPServer(ctx context.Context, appPort uint, router http.Handler) error
 	})
 
 	g.Go(func() error {
-		<-gCtx.Done()
-		return server.Shutdown(gCtx)
+		<-ctx.Done()
+		return server.Shutdown(ctx)
 	})
-
-	return g.Wait()
 }

@@ -60,20 +60,19 @@ func main() {
 	app.Metrics.BuildInfo.Inc()
 	app.RegisterRoutes(r)
 
-	// if err := someDaemon(ctx); err != nil {
-	//	log.Errorf("someDaemon error: %s", err.Error())
-	// }
+	g, gCtx := errgroup.WithContext(ctx)
 
-	if err := server.RunHTTPServer(ctx, cfg.AppConfig.Port, r); err != nil {
-		log.Infof("RunHTTPServer error: %s", err.Error())
+	server.RunHTTPServer(gCtx, g, cfg.AppConfig.Port, r)
+	someDaemon(gCtx, g)
+
+	if err := g.Wait(); err != nil {
+		log.Error(err)
 	}
 
 	fmt.Println(`Main done`)
 }
 
-func someDaemon(ctx context.Context) error {
-	g, gCtx := errgroup.WithContext(ctx)
-
+func someDaemon(gCtx context.Context, g *errgroup.Group) {
 	g.Go(func() error {
 		for {
 			select {
@@ -84,6 +83,4 @@ func someDaemon(ctx context.Context) error {
 			}
 		}
 	})
-
-	return g.Wait()
 }
