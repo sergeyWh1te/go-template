@@ -6,10 +6,11 @@ go-skeleton-lido
  2. cd root repository
  3. make tools
  4. make vendor
- 5. docker-composer up -d
- 6. make migrate
- 7. make build
- 8. Run service ./bin/service
+ 5. copy `sample.env` to `.env` 
+ 6. docker-compose up -d
+ 7. make migrate
+ 8. make build
+ 9. Run service ./bin/service
 
 ## How to create migrations?
  ./bin/migrate create -ext=sql -dir=db/migrations <your table name>
