@@ -9,7 +9,6 @@ type usecase struct {
 	User users.Usecase
 }
 
-// nolint
 func Usecase(
 	repo *repository,
 ) *usecase {

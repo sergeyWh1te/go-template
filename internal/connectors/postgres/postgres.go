@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -19,15 +18,15 @@ var (
 
 const (
 	MaxOpenConns = 25
-	MaxIdleConns = 60 * int(time.Second)
+	MaxIdleConns = 60
 )
 
-func DatabaseURI(config env.PgConfig) string {
+func DatabaseURI(config *env.PgConfig) string {
 	return fmt.Sprintf(`postgres://%s:%s@%s:%d/%s?sslmode=%s`,
 		config.Username, config.Password, config.Host, config.Port, config.Database, config.SslMode)
 }
 
-func Connect(config env.PgConfig) (*sqlx.DB, error) {
+func Connect(config *env.PgConfig) (*sqlx.DB, error) {
 	conf, parseErr := pgx.ParseConfig(
 		fmt.Sprintf(`host=%s port=%d user=%s password=%s dbname=%s sslmode=%s simple_protocol=%t`,
 			config.Host, config.Port, config.Username, config.Password, config.Database, config.SslMode, true),

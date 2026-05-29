@@ -46,7 +46,7 @@ func Read() (*Config, error) {
 		viper.SetConfigFile(".env")
 
 		viper.AutomaticEnv()
-		if viperErr := viper.ReadInConfig(); err != nil {
+		if viperErr := viper.ReadInConfig(); viperErr != nil {
 			if _, ok := viperErr.(viper.ConfigFileNotFoundError); !ok {
 				err = viperErr
 				return

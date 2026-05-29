@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"log/slog"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/sergeyWh1te/go-template/internal/connectors/metrics"
@@ -19,18 +20,16 @@ const (
 )
 
 type App struct {
-	Logger  *logrus.Logger
+	Logger  *slog.Logger
 	Metrics *metrics.Store
 	usecase *usecase
-	repo    *repository
 }
 
-func New(logger *logrus.Logger, metrics *metrics.Store, usecase *usecase, repo *repository) *App {
+func New(logger *slog.Logger, metricsStore *metrics.Store, usecase *usecase) *App {
 	return &App{
 		Logger:  logger,
-		Metrics: metrics,
+		Metrics: metricsStore,
 		usecase: usecase,
-		repo:    repo,
 	}
 }
 

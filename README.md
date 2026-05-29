@@ -1,40 +1,136 @@
 # go-template
-go-skeleton-lido
 
- ## How to use the template
- 1. Clone repository
- 2. cd root repository
- 3. make tools
- 4. make vendor
- 5. copy `sample.env` to `.env` 
- 6. docker-compose up -d
- 7. make migrate
- 8. make build
- 9. Run service ./bin/service
+A production-ready Go service skeleton for building HTTP APIs quickly and correctly. It comes pre-wired with Postgres, structured logging, Prometheus metrics, database migrations, and a clean layered architecture — so you can start writing domain logic on day one instead of plumbing.
 
-## How to create migrations?
- ./bin/migrate create -ext=sql -dir=db/migrations <your table name>
+## What's included
 
-## How to make migrations?
-1. make migrate from terminal or 
+| Concern | Library |
+|---|---|
+| HTTP router | [go-chi/chi v5](https://github.com/go-chi/chi) |
+| Database driver | [jackc/pgx v5](https://github.com/jackc/pgx) + [jmoiron/sqlx](https://github.com/jmoiron/sqlx) |
+| Migrations | [golang-migrate/migrate v4](https://github.com/golang-migrate/migrate) |
+| Logger | stdlib `log/slog` (JSON or text, configured via `LOG_FORMAT`) |
+| Metrics | [prometheus/client_golang](https://github.com/prometheus/client_golang) |
+| Config | [spf13/viper](https://github.com/spf13/viper) (reads `.env`) |
+| Mocks | [vektra/mockery](https://github.com/vektra/mockery) |
+| Linter | [golangci-lint](https://golangci-lint.run/) |
+
+## Quick start
+
+```sh
+# 1. Install dev tools into ./bin/
+make tools
+
+# 2. Vendor dependencies
+make vendor
+
+# 3. Configure environment
+cp sample.env .env
+
+# 4. Start Postgres
+docker-compose up -d postgres
+
+# 5. Apply migrations
+make migrate
+
+# 6. Build and run
+make build
+./bin/service
 ```
-    bin/migrate -database ${POSTGRESQL_URL} -path db/migrations up
+
+The service starts on `http://localhost:8080`.
+
+**Endpoints out of the box:**
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| GET | `/metrics` | Prometheus metrics |
+| GET | `/example` | Example user endpoint |
+
+## Running with Docker
+
+```sh
+docker-compose up -d
 ```
 
-## Where I have to start to code my custom logic?
-* [Register handler](./internal/app/server/routes.go)
-* [Logic layer](./internal/pkg/users): /internal/pkg/your_package_name/. Just see an example with [User package](./internal/pkg/users)
-* [Env](./internal/env/env.go)
-* [Connecters](./internal/connectors) pg, logger, redis and etc...
-* For external clients you have to create folder in ./internal/clients/<your_client_name>/client.go where your_client_name - is google_client, alchemy or internal client for private network.
+This builds the service image and starts it alongside Postgres. The service waits for Postgres to be healthy before starting.
 
-## Docs and rules
-1. [App structure layout](./docs/structure.md)
-2. [Code style](./docs/code_style.md)
+## Project structure
 
-## Current drivers or dependencies
-1. Postgres - [pgx](https://github.com/jackc/pgx)
-2. Logger - [Logrus](https://github.com/sirupsen/logrus)
-3. Mockery [Mockery](https://github.com/vektra/mockery)
-4. Http router [gorilla_mux](github.com/gorilla/mux). Of course your can change it for example to [Gin](https://github.com/gin-gonic/gin)
-5. Env reader [Viper](https://github.com/spf13/viper)
+```
+go-template/
+├── cmd/
+│   ├── service/          # Main HTTP server binary
+│   ├── worker/           # Background worker binary
+│   ├── fan_out/          # Fan-out concurrency example
+│   └── shared_memory/    # Shared memory concurrency example
+│
+├── internal/
+│   ├── app/
+│   │   └── http_server/  # Composition root: wires repos, usecases, routes
+│   ├── connectors/
+│   │   ├── logger/       # slog setup (text/JSON handler, level parsing)
+│   │   ├── metrics/      # Prometheus registry
+│   │   └── postgres/     # sqlx connection setup
+│   ├── env/              # Config struct, Viper reader
+│   ├── http/
+│   │   └── handlers/     # HTTP handler structs (one folder per endpoint)
+│   ├── pkg/
+│   │   └── users/        # Example domain package
+│   │       ├── entity/   # Domain structs
+│   │       ├── usecase/  # Business logic implementation
+│   │       ├── repository/ # Postgres queries
+│   │       ├── mocks/    # Auto-generated mocks
+│   │       ├── usecase.go  # Usecase interface
+│   │       └── repository.go # Repository interface
+│   └── utils/
+│
+├── db/
+│   └── migrations/       # SQL migration files (up/down)
+├── docs/
+│   ├── structure.md      # Project layout conventions
+│   └── code_style.md     # Code style rules
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+└── sample.env
+```
+
+## Adding a new domain
+
+1. Create `internal/pkg/<your_domain>/` following the `users` package as a reference:
+   - Define `Usecase` and `Repository` interfaces with `//go:generate` directives
+   - Implement them in `usecase/usecase.go` and `repository/repository.go`
+   - Put domain structs in `entity/`
+
+2. Register the new repo and usecase in `internal/app/http_server/repository.go` and `usecase.go`.
+
+3. Add a handler in `internal/http/handlers/<your_handler>/` and register the route in `internal/app/http_server/routes.go`.
+
+4. For external API clients, create `internal/clients/<client_name>/client.go`.
+
+## Migrations
+
+```sh
+make migrate                      # apply all pending migrations
+make migrate-down                 # roll back all migrations
+make migrate-step-down            # roll back one migration
+make migrate-version              # print current migration version
+make migrate-force v=<version>    # force-set version (recover dirty state)
+make migrate-create name=<name>   # create a new sequential migration pair
+make migrate-drop                 # drop everything in the database
+```
+
+## Development
+
+```sh
+make full-lint          # goimports + fmt + vet + golangci-lint
+go test ./...           # all tests
+go generate ./internal/pkg/<domain>/...   # regenerate mocks
+```
+
+## Docs
+
+- [Project layout conventions](./docs/structure.md)
+- [Code style guide](./docs/code_style.md)

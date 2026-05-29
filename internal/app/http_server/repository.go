@@ -11,7 +11,6 @@ type repository struct {
 	User users.Repository
 }
 
-// nolint
 func Repository(db *sqlx.DB) *repository {
 	return &repository{
 		User: userRepo.New(db),

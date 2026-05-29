@@ -19,20 +19,20 @@ func New(db *sqlx.DB) users.Repository {
 	}
 }
 
-func (r *repo) Get(ctx context.Context, ID int64) (*entity.User, error) {
+func (r *repo) Get(ctx context.Context, id int64) (*entity.User, error) {
 	var out entity.User
-	err := r.db.GetContext(ctx, &out, `select * from users where id = $1`, ID)
+	err := r.db.GetContext(ctx, &out, `select * from users where id = $1`, id)
 
 	return &out, err
 }
 
 func (r *repo) Create(ctx context.Context) (*int64, error) {
-	var ID int64
+	var id int64
 
-	query := `insert into users () returning id;`
-	if createUserErr := r.db.GetContext(ctx, &ID, query); createUserErr != nil {
+	query := `insert into users default values returning id;`
+	if createUserErr := r.db.GetContext(ctx, &id, query); createUserErr != nil {
 		return nil, createUserErr
 	}
 
-	return &ID, nil
+	return &id, nil
 }

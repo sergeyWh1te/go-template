@@ -36,11 +36,11 @@ func writer2(s *Store) {
 func reader(s *Store) {
 	for {
 		time.Sleep(time.Second)
-		s.m.RLocker().Lock()
+		s.m.RLock()
 		if s.data != "" {
 			fmt.Println(s.data)
 		}
-		s.m.RLocker().Unlock()
+		s.m.RUnlock()
 	}
 }
 

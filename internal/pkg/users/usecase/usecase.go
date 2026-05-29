@@ -17,6 +17,6 @@ func New(repo users.Repository) users.Usecase {
 	}
 }
 
-func (u *usecase) Get(ctx context.Context, ID int64) (*entity.User, error) {
-	return u.repo.Get(ctx, ID)
+func (u *usecase) Get(ctx context.Context, id int64) (*entity.User, error) {
+	return u.repo.Get(ctx, id)
 }

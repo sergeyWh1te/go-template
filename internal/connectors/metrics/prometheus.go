@@ -8,14 +8,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-var re = regexp.MustCompile(`/-|\ /g`)
+var re = regexp.MustCompile(`[-\s]+`)
 
 type Store struct {
 	Prometheus *prometheus.Registry
 	BuildInfo  prometheus.Counter
 }
 
-func New(promRegistry *prometheus.Registry, appName string, env string) *Store {
+func New(promRegistry *prometheus.Registry, appName, env string) *Store {
 	store := &Store{
 		Prometheus: promRegistry,
 		BuildInfo: promauto.NewCounter(prometheus.CounterOpts{

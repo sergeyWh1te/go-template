@@ -8,6 +8,6 @@ import (
 
 //go:generate ./../../../bin/mockery --name Repository
 type Repository interface {
-	Get(ctx context.Context, ID int64) (*entity.User, error)
+	Get(ctx context.Context, id int64) (*entity.User, error)
 	Create(ctx context.Context) (*int64, error)
 }

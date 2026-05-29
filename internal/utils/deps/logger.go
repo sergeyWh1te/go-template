@@ -1,10 +1,10 @@
 package deps
 
-import "github.com/sirupsen/logrus"
+import "log/slog"
 
 type Logger interface {
-	Error(args ...interface{})
-	Info(args ...interface{})
-	WithField(key string, value interface{}) *logrus.Entry
-	WithFields(fields logrus.Fields) *logrus.Entry
+	Error(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	With(args ...any) *slog.Logger
 }

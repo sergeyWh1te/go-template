@@ -1,13 +1,11 @@
 # Build stage
-FROM golang:1.20.5-alpine as builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /go/src/app
 
 COPY . .
 
-# Собираем приложение
 RUN go build -o ./bin/main ./cmd/service
-RUN go build -o ./bin/migrator ./cmd/migrator
 
 # Run stage
 FROM alpine:latest

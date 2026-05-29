@@ -40,7 +40,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		fmt.Sprint("Error group", err)
+		fmt.Println("Error group", err)
 	}
 
 	fmt.Println(`Done main`)

@@ -2,7 +2,6 @@ package userexample
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/sergeyWh1te/go-template/internal/pkg/users"
@@ -22,17 +21,21 @@ func New(log deps.Logger, userUc users.Usecase) *handler {
 }
 
 func (h *handler) Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
 	user, err := h.userUc.Get(r.Context(), int64(1))
 	if err != nil {
-		h.log.Error(fmt.Errorf(`some eror %w`, err))
-
-		fmt.Fprint(w, "user not found")
+		h.log.Error("get user", "err", err)
+		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 
-	jsonResponse, _ := json.Marshal(user)
+	jsonResponse, err := json.Marshal(user)
+	if err != nil {
+		h.log.Error("marshal user", "err", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(jsonResponse)
 }

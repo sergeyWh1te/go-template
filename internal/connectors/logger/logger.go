@@ -1,58 +1,34 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
-	"sync"
-
-	"github.com/evalphobia/logrus_sentry"
-	"github.com/sirupsen/logrus"
 
 	"github.com/sergeyWh1te/go-template/internal/env"
 )
 
-var (
-	logger            *logrus.Logger
-	onceDefaultClient sync.Once
-)
+func New(cfg *env.AppConfig) (*slog.Logger, error) {
+	level, err := parseLevel(cfg.LogLevel)
+	if err != nil {
+		return nil, err
+	}
 
-func New(cfg *env.AppConfig) (*logrus.Logger, error) {
-	var (
-		err error
-	)
+	opts := &slog.HandlerOptions{Level: level}
 
-	onceDefaultClient.Do(func() {
-		logger = logrus.StandardLogger()
+	var handler slog.Handler
+	if cfg.LogFormat == "json" {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	} else {
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	}
 
-		logLevel, levelErr := logrus.ParseLevel(cfg.LogLevel)
-		if levelErr != nil {
-			err = levelErr
-			return
-		}
+	return slog.New(handler), nil
+}
 
-		logger.SetLevel(logLevel)
-		logger.SetFormatter(&logrus.TextFormatter{})
-
-		if cfg.LogFormat == "json" {
-			logger.SetFormatter(&logrus.JSONFormatter{})
-		}
-
-		logger.SetOutput(os.Stdout)
-
-		if cfg.SentryDsn != "" {
-			hook, hookErr := logrus_sentry.NewSentryHook(cfg.SentryDsn, []logrus.Level{
-				logrus.PanicLevel,
-				logrus.FatalLevel,
-				logrus.ErrorLevel,
-			})
-
-			if hookErr != nil {
-				err = hookErr
-				return
-			}
-
-			logger.Hooks.Add(hook)
-		}
-	})
-
-	return logger, err
+func parseLevel(s string) (slog.Level, error) {
+	var level slog.Level
+	if err := level.UnmarshalText([]byte(s)); err != nil {
+		return level, err
+	}
+	return level, nil
 }

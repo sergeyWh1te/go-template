@@ -23,9 +23,9 @@ func producer() chan int {
 	return ch
 }
 
-func fanOut(in chan int) (chan int, chan int) {
-	outA := make(chan int)
-	outB := make(chan int)
+func fanOut(in chan int) (outA, outB chan int) {
+	outA = make(chan int)
+	outB = make(chan int)
 
 	go func() {
 		defer func() {
@@ -34,10 +34,8 @@ func fanOut(in chan int) (chan int, chan int) {
 		}()
 
 		for d := range in {
-			select {
-			case outA <- d:
-			case outB <- d:
-			}
+			outA <- d
+			outB <- d
 		}
 	}()
 

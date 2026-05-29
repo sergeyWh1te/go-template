@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -36,26 +37,26 @@ func main() {
 		return
 	}
 
-	db, errDB := postgres.Connect(cfg.PgConfig)
+	db, errDB := postgres.Connect(&cfg.PgConfig)
 	if errDB != nil {
-		log.Fatalf("Connect db error: %s", errDB.Error())
+		fmt.Println("Connect db error:", errDB.Error())
 		return
 	}
 	defer func(db *sqlx.DB) {
 		if err := db.Close(); err != nil {
-			log.Errorf("Could not close db connection: %s", err.Error())
+			log.Error("could not close db connection", "err", err)
 		}
 	}(db)
 
-	log.Info(fmt.Sprintf(`started %s application`, cfg.AppConfig.Name))
+	log.Info("started application", "name", cfg.AppConfig.Name)
 
 	r := chi.NewRouter()
-	metrics := metrics.New(prometheus.NewRegistry(), cfg.AppConfig.Name, cfg.AppConfig.Env)
+	metricsStore := metrics.New(prometheus.NewRegistry(), cfg.AppConfig.Name, cfg.AppConfig.Env)
 
 	repo := server.Repository(db)
 	usecase := server.Usecase(repo)
 
-	app := server.New(log, metrics, usecase, repo)
+	app := server.New(log, metricsStore, usecase)
 
 	app.Metrics.BuildInfo.Inc()
 	app.RegisterRoutes(r)
@@ -63,24 +64,10 @@ func main() {
 	g, gCtx := errgroup.WithContext(ctx)
 
 	app.RunHTTPServer(gCtx, g, cfg.AppConfig.Port, r)
-	someDaemon(gCtx, g)
 
-	if err := g.Wait(); err != nil {
-		log.Error(err)
+	if err := g.Wait(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Error("server stopped", "err", err)
 	}
 
-	fmt.Println(`Main done`)
-}
-
-func someDaemon(gCtx context.Context, g *errgroup.Group) {
-	g.Go(func() error {
-		for {
-			select {
-			case <-time.After(1 * time.Second):
-				fmt.Println(2)
-			case <-gCtx.Done():
-				return nil
-			}
-		}
-	})
+	log.Info("shutdown complete")
 }

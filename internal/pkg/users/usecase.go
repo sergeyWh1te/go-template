@@ -8,5 +8,5 @@ import (
 
 //go:generate ./../../../bin/mockery --name Usecase
 type Usecase interface {
-	Get(ctx context.Context, ID int64) (*entity.User, error)
+	Get(ctx context.Context, id int64) (*entity.User, error)
 }
