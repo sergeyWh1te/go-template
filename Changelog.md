@@ -49,11 +49,14 @@ It was graceful in name only — three separate bugs, each reproduced before bei
 ### CI
 
 30. Added `.github/workflows/checks.yml`: `format`, `lint`, `vulncheck`, `test` and `docker`. `test` is gated behind `vulncheck` and runs `make test-integration` against a Postgres service container, so the database-backed tests can never silently skip.
+31. Bumped the workflow actions to majors that run on Node 24, silencing the runner's "Node 20 is being deprecated" warning: `actions/checkout` v4 → v7.0.1, `actions/setup-go` v5 → v7.0.0, `docker/setup-buildx-action` v3 → v4.3.0, `docker/build-push-action` v6 → v7.3.0.
+32. Documented the "Failed to save: Unable to reserve cache" line in the workflow header. It is not a failure: the parallel jobs share one cache key derived from `go.sum` and race to save it, so every loser logs it while one job stores the entry and the rest reuse it next run. Left `cache: true` on all jobs rather than adding a read/write split, which would duplicate `setup-go`'s own key handling for no real gain.
 
 ### Dependencies
 
-31. Security: `golang.org/x/text` v0.29.0 → v0.39.0 (GO-2026-5970, reachable from this code) and `golang.org/x/sys` v0.35.0 → v0.44.0 (GO-2026-5024).
-32. Updated every remaining outdated direct dependency, leaving `make outdated` empty: `go-chi/chi/v5` v5.3.0 → v5.3.2, `jackc/pgx/v5` v5.9.2 → v5.10.0, `prometheus/client_golang` v1.23.2 → v1.24.1, `stretchr/testify` v1.11.1 → v1.12.1, `golang.org/x/sync` v0.21.0 → v0.22.0. Transitively `prometheus/common` v0.70.1, `prometheus/procfs` v0.21.1, `golang.org/x/sys` v0.47.0, `golang.org/x/text` v0.40.0, `go.yaml.in/yaml/v3` v3.0.5.
+33. Security: `golang.org/x/text` v0.29.0 → v0.39.0 (GO-2026-5970, reachable from this code) and `golang.org/x/sys` v0.35.0 → v0.44.0 (GO-2026-5024).
+34. Updated every remaining outdated direct dependency, leaving `make outdated` empty: `go-chi/chi/v5` v5.3.0 → v5.3.2, `jackc/pgx/v5` v5.9.2 → v5.10.0, `prometheus/client_golang` v1.23.2 → v1.24.1, `stretchr/testify` v1.11.1 → v1.12.1, `golang.org/x/sync` v0.21.0 → v0.22.0. Transitively `prometheus/common` v0.70.1, `prometheus/procfs` v0.21.1, `golang.org/x/sys` v0.47.0, `golang.org/x/text` v0.40.0, `go.yaml.in/yaml/v3` v3.0.5.
+
 
 ### Housekeeping
 
@@ -61,8 +64,8 @@ It was graceful in name only — three separate bugs, each reproduced before bei
 
 ### Documentation
 
-33. Rewrote `docs/structure.md`. It described a hypothetical `my-awesome-go-project` with `api/`, `assets/`, `web/`, `website/` and `vendor/` — none of which exist here — while the real `infra/` and `docs/` were missing from the tree. The actual layout comes first now, annotated folder by folder and verified against the working tree, followed by a request-flow diagram and a step-by-step "Adding a domain" section; the golang-standards layout stays below as a reference. Fixed the broken tree glyphs (ASCII `|` mixed with `│`) and translated the leftover Russian.
-34. Added `CLAUDE.md` and kept it in step with the code.
+36. Rewrote `docs/structure.md`. It described a hypothetical `my-awesome-go-project` with `api/`, `assets/`, `web/`, `website/` and `vendor/` — none of which exist here — while the real `infra/` and `docs/` were missing from the tree. The actual layout comes first now, annotated folder by folder and verified against the working tree, followed by a request-flow diagram and a step-by-step "Adding a domain" section; the golang-standards layout stays below as a reference. Fixed the broken tree glyphs (ASCII `|` mixed with `│`) and translated the leftover Russian.
+37. Added `CLAUDE.md` and kept it in step with the code.
 
 **Verification.** Integration tests pass against a real database; the rebuilt container comes up healthy; `/example` returns `{"ID":1}` through the full handler → usecase → repository → Postgres path; `/metrics` carries `build_info` plus the Go and process collectors; `docker compose stop` exits 0, not 137. Lint, race and govulncheck are clean.
 
