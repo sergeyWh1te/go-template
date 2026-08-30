@@ -1,6 +1,8 @@
 # Mac OS X files
 .DS_Store
 .env
+.env.*
+!.env.example
 .env.yml
 .idea/
 .vscode/
@@ -18,6 +20,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+coverage.out
 
 bin
 

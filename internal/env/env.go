@@ -1,6 +1,8 @@
 package env
 
 import (
+	"errors"
+	"io/fs"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -46,10 +48,19 @@ func Read() (*Config, error) {
 		viper.SetConfigFile(".env")
 
 		viper.AutomaticEnv()
-		if viperErr := viper.ReadInConfig(); viperErr != nil {
-			if _, ok := viperErr.(viper.ConfigFileNotFoundError); !ok {
-				err = viperErr
-				return
+
+		// READ_ENV_FROM_SHELL lets the process run with no .env at all — the
+		// shell environment is the config. That is how the service runs in
+		// Docker and in CI, where there is no file to read.
+		if !viper.GetBool("READ_ENV_FROM_SHELL") {
+			if viperErr := viper.ReadInConfig(); viperErr != nil {
+				// SetConfigFile makes viper report a missing file as *fs.PathError,
+				// not ConfigFileNotFoundError, so both have to be tolerated.
+				_, notFound := errors.AsType[viper.ConfigFileNotFoundError](viperErr)
+				if !notFound && !errors.Is(viperErr, fs.ErrNotExist) {
+					err = viperErr
+					return
+				}
 			}
 		}
 

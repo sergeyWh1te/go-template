@@ -1,0 +1,5 @@
+# Local Postgres data directory (bind-mounted by docker-compose.yml).
+# The directory is tracked so the mount point exists on a fresh clone; its
+# contents are runtime state and never belong in git.
+*
+!.gitignore

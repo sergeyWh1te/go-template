@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 
@@ -31,22 +28,20 @@ func main() {
 		return
 	}
 
-	log, logErr := logger.New(&cfg.AppConfig)
-	if logErr != nil {
-		fmt.Println("Logger error:", logErr.Error())
-		return
-	}
+	log := logger.New(&cfg.AppConfig)
 
 	db, errDB := postgres.Connect(&cfg.PgConfig)
 	if errDB != nil {
-		fmt.Println("Connect db error:", errDB.Error())
+		log.Error("could not connect to db", "err", errDB)
 		return
 	}
-	defer func(db *sqlx.DB) {
-		if err := db.Close(); err != nil {
+	// Closed explicitly after the HTTP server has drained (see the end of main),
+	// with this defer as the safety net for the early-return paths below.
+	defer func() {
+		if err := postgres.Close(); err != nil {
 			log.Error("could not close db connection", "err", err)
 		}
-	}(db)
+	}()
 
 	log.Info("started application", "name", cfg.AppConfig.Name)
 
@@ -65,8 +60,27 @@ func main() {
 
 	app.RunHTTPServer(gCtx, g, cfg.AppConfig.Port, r)
 
-	if err := g.Wait(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	// RunHTTPServer already treats ErrServerClosed as success, so anything left
+	// here is a real failure. Filtering it out again would hide the shutdown
+	// error, which errgroup would otherwise drop as the second one reported.
+	err := g.Wait()
+
+	// Stop trapping signals now that the server is down: from here on a second
+	// Ctrl-C should kill the process outright rather than be swallowed while the
+	// database connection is closing.
+	stop()
+
+	// Close the database only now: the HTTP server has drained, so no handler is
+	// still holding a connection. database/sql waits for in-flight queries, and
+	// the deferred Close above turns into a no-op once this one has run.
+	if closeErr := postgres.Close(); closeErr != nil {
+		log.Error("could not close db connection", "err", closeErr)
+	}
+
+	if err != nil {
 		log.Error("server stopped", "err", err)
+
+		return
 	}
 
 	log.Info("shutdown complete")

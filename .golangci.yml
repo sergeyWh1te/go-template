@@ -7,11 +7,14 @@ linters:
   default: none
   enable:
     - bodyclose
+    - copyloopvar
     - depguard
     - dogsled
     - dupl
     - errcheck
+    - errorlint
     - funlen
+    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
@@ -21,16 +24,20 @@ linters:
     - ineffassign
     - lll
     - misspell
+    - mnd
+    - modernize
     - nakedret
     - noctx
     - nolintlint
+    - perfsprint
     - revive
     - staticcheck
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
+    - usetesting
     - whitespace
-
 
   settings:
     depguard:
@@ -66,8 +73,11 @@ linters:
     gocyclo:
       min-complexity: 15
     govet:
-      enable:
-        - shadow
+      enable-all: true
+      disable:
+        # Reordering struct fields for padding hurts readability more than the
+        # few bytes it saves in a service of this size.
+        - fieldalignment
     lll:
       line-length: 140
     misspell:
@@ -79,10 +89,10 @@ linters:
         - condition
         - return
       ignored-numbers:
-        - '0'
-        - '1'
-        - '2'
-        - '3'
+        - "0"
+        - "1"
+        - "2"
+        - "3"
       ignored-functions:
         - strings.SplitN
     nolintlint:
@@ -94,14 +104,31 @@ linters:
         - name: unexported-return
           disabled: true
         - name: unused-parameter
+    staticcheck:
+      checks:
+        - all
+        - -ST1003
+        - -ST1011
 
   exclusions:
-    paths:
-      - mocks
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
       - path: _test\.go
         linters:
+          - dupl
+          - funlen
+          - goconst
           - mnd
+    paths:
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$
 
 formatters:
   enable:
@@ -116,3 +143,11 @@ formatters:
     goimports:
       local-prefixes:
         - github.com/sergeyWh1te/go-template
+
+  exclusions:
+    generated: lax
+    paths:
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$

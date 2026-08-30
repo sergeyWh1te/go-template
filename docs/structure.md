@@ -1,148 +1,132 @@
-More full information about how to struct your go.app you can find here https://github.com/golang-standards/project-layout
+# Project structure
 
-my-awesome-go-project
+How this template is laid out, and where to put new code.
+
+The layout follows [golang-standards/project-layout](https://github.com/golang-standards/project-layout).
+Only the folders this project actually needs are present — see
+[Reference layout](#reference-layout) for the rest.
+
+## This repository
+
 ```text
-|
-└───api
-|  
-└───assets
-|      |
-|      └───images
-|      |      image.jpg    
-|      |
-|      └───logs
-|             log.txt
-|
-└───build
-|
-|
-└───cmd
-│   |
-│   └───web-server
-│   |       main.go
-│   └───daemon
-|   |       main.go
-|   └───worker    
-|           main.go
-|
-└───configs or etc
-|     some.yaml  
-|
-└───deployments или deploy
-|
-└───docs
-|      
-└───examples
-|      sample_some_request.http
-|
-|
-└───internal
-|        |
-|        |
-|        └───api
-|        |    └───handler
-|        |          └───handler
-|        |                 handler.go
-|        |                 handler_test.go
-|        |
-|        └───app
-|        |    └───web-server
-|        |    |      some_file.go        
-|        |    │     
-|        |    └───daemon
-|        |    |       some_file.go
-|        |    |
-|        |    └───worker
-|        |           some_file.go
-|        |
-|        └───http
-|        |    |
-|        |    └───middleware
-|        |    |         check_some_permission.go  
-|        |    |         check_some_permission_test.go
-|        |    |
-|        |    └───some_name_handler
-|        |                handler.go
-|        |                handler_test.go
-|        |
-|        └───grpc
-|        |    |
-|        |    └───some_name_grpc_handler     
-|        |                handler.go
-|        |                handler_test.go
-|        |
-|        └───pkg
-|        |    │   
-|        |    └───domain
-|        |           |
-|        |           └───mocks (generates automatically by mockery)
-|        |           |      Repository.go
-|        |           |      Usecase.go
-|        |           └───entity
-|        |           |     your_model_name.go
-|        |           |
-|        |           └───usecase
-|        |           |      usecase.go
-|        |           |      usecase_test.go
-|        |           |
-|        |           └───repository
-|        |           |      repository.go
-|        |           |      repository_test.go
-|        |           |
-|        |           | repository.go (interface для repository)
-|        |           | usecase.go    (interface для usecase)
-|        |           
-|        └───utils
-|              |
-|              └───pointers
-|              |      pointers.go
-|              |      pointers_test.go
-|              └───slices
-|              |      slices.go
-|              |      slices_test.go
-|              └───strings
-|                     strings.go
-|                     strings_test.go               
-|
-|
-└───pkg (If the repository is a library, then external projects, will able to import packages from this folder)
-|
-|
-└───scripts
-|     some_bash.sh
-|
-└───test (For integrations, smoke and other tests and test's data)       
-|
-|
-└───tools (could use code from internal/*, pkg/*)
-|     |
-|     └───migrator_tools 
-|     |
-|     └───some_linter_tool
-|     |   
-|     └───and_3third_party_app_for_tooling_purposes
-|
-|
-|  
-└───web
-|    └───react_spa_app
-|    |
-|    └───vue_spa_app
-|    |
-|    └───flutter_app
-|    |
-|    └───html_templates (twig or blade for example)
-|
-└───website
-|     |
-|     └───one page app aka git hub pages or etc
-|
-|
-└───vendor
-|
-|   app.toml
-│   README.md
-│   robots.txt    
-│   Makefile  
-  ``` 
+go-template/
+├── cmd/                          # one folder per binary
+│   ├── service/                  # HTTP server — the real entry point
+│   ├── worker/                   # background daemon skeleton (errgroup)
+│   ├── fan_out/                  # concurrency example
+│   └── shared_memory/            # concurrency example
+│
+├── internal/                     # not importable from other modules
+│   ├── app/
+│   │   └── http_server/          # composition root — wires everything together
+│   │       ├── server.go         # App struct, RunHTTPServer
+│   │       ├── routes.go         # routes and middleware
+│   │       ├── repository.go     # repository factory
+│   │       └── usecase.go        # usecase factory
+│   │
+│   ├── connectors/               # infrastructure adapters
+│   │   ├── logger/               # log/slog setup
+│   │   ├── metrics/              # Prometheus registry
+│   │   └── postgres/             # sqlx over the pgx driver
+│   │
+│   ├── env/                      # config, read from .env via viper
+│   │
+│   ├── http/
+│   │   └── handlers/             # one folder per endpoint
+│   │       ├── health/
+│   │       └── user_example/
+│   │
+│   ├── pkg/                      # domain packages, one folder per domain
+│   │   └── users/                # the reference implementation
+│   │       ├── entity/           # domain structs
+│   │       ├── usecase/          # business logic
+│   │       ├── repository/       # database access
+│   │       ├── mocks/            # generated by mockery — never edit by hand
+│   │       ├── usecase.go        # Usecase interface + //go:generate
+│   │       └── repository.go     # Repository interface + //go:generate
+│   │
+│   └── utils/
+│       ├── deps/                 # narrow interfaces for injected dependencies
+│       └── testdb/               # database fixtures for tests
+│
+├── db/
+│   └── migrations/               # SQL migrations, up/down pairs
+│
+├── infra/
+│   └── postgres/                 # local database files (git-ignored)
+│
+└── docs/
+    ├── structure.md              # this file
+    └── code_style.md
+```
 
+## Request flow
+
+Each layer depends on the interface of the one below it, never on its
+implementation. That is what keeps handlers and usecases testable with mocks.
+
+```text
+cmd/service/main.go
+    │  builds config, logger, database, metrics
+    ▼
+internal/app/http_server/          composition root
+    │  routes.go registers handlers
+    ▼
+internal/http/handlers/<name>/     decodes the request, writes the response
+    │  depends on users.Usecase (an interface)
+    ▼
+internal/pkg/<domain>/usecase/     business logic
+    │  depends on users.Repository (an interface)
+    ▼
+internal/pkg/<domain>/repository/  SQL queries
+    │
+    ▼
+                                   Postgres
+```
+
+## Adding a domain
+
+1. Create `internal/pkg/<domain>/` next to `users/`:
+   - `entity/<name>.go` — the domain struct, with `db:` tags for sqlx
+   - `repository.go` and `usecase.go` — the interfaces, each with a
+     `//go:generate ./../../../bin/mockery --name <Name>` directive
+   - `repository/repository.go` and `usecase/usecase.go` — the implementations
+2. Wire it into the composition root: `internal/app/http_server/repository.go`
+   and `usecase.go`.
+3. Add a handler in `internal/http/handlers/<name>/` and register its route in
+   `internal/app/http_server/routes.go`.
+4. Run `make generate-mocks`.
+
+Two conventions matter here: implementations stay private and are exposed only
+through `New`, and handlers accept interfaces (`users.Usecase`, `deps.Logger`)
+rather than concrete structs. See [code_style.md](code_style.md).
+
+For an external API client, add `internal/clients/<name>/client.go`.
+
+## Reference layout
+
+Folders this template does not have yet. Add one only when something needs it —
+an empty directory is worse than no directory.
+
+```text
+project/
+├── api/                  # OpenAPI, protobuf and other schema definitions
+├── assets/               # images, sample logs and similar static files
+├── build/                # packaging and CI helpers
+├── configs/              # config files, when .env is not enough
+├── deployments/          # Kubernetes manifests, Helm charts, Terraform
+├── examples/             # sample requests, e.g. *.http files
+├── internal/
+│   └── grpc/             # gRPC handlers, mirroring internal/http/
+├── pkg/                  # public packages, importable by other modules;
+│                         # only for a repository meant to be used as a library
+├── scripts/              # shell helpers
+├── test/                 # integration and e2e tests plus their fixtures
+├── web/                  # frontend application (React, Vue, templates)
+└── website/              # project page, e.g. GitHub Pages
+```
+
+A note on `internal/` versus `pkg/`: the Go toolchain refuses imports of
+`internal/` from outside the module, which is the right default for a service.
+`pkg/` is for code that is deliberately public — reach for it only when this
+repository is a library.

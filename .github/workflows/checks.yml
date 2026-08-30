@@ -1,0 +1,142 @@
+---
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  GOLANGCI_LINT_VERSION: v2.13.2
+  GOVULNCHECK_VERSION: v1.7.0
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install golangci-lint
+        run: |
+          GOBIN=$PWD/bin go install \
+            github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_LINT_VERSION }}
+
+      - name: Check formatting
+        run: make check-format
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install golangci-lint
+        run: |
+          GOBIN=$PWD/bin go install \
+            github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_LINT_VERSION }}
+
+      - name: Run linters
+        run: make lint
+
+  vulncheck:
+    name: Vulncheck
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install govulncheck
+        run: |
+          GOBIN=$PWD/bin go install \
+            golang.org/x/vuln/cmd/govulncheck@${{ env.GOVULNCHECK_VERSION }}
+
+      - name: Run govulncheck
+        run: make vulncheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    # Don't spend runner time on a tree with known vulnerable dependencies.
+    needs: vulncheck
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: master
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: make build
+
+      # test-integration, not test: with a service container present the
+      # database-backed tests must actually run, never silently skip.
+      - name: Run tests
+        run: make test-integration
+        env:
+          TEST_PG_DSN: postgres://postgres:postgres@127.0.0.1:5432/master?sslmode=disable
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    # Catch a broken Dockerfile here instead of at deploy time. The image is
+    # built but never pushed.
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          build-args: |
+            COMMIT=${{ github.sha }}
+          tags: go-template:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify the binary is in the image
+        run: docker run --rm --entrypoint ls go-template:ci -l /app/service

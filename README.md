@@ -13,7 +13,8 @@ A production-ready Go service skeleton for building HTTP APIs quickly and correc
 | Metrics | [prometheus/client_golang](https://github.com/prometheus/client_golang) |
 | Config | [spf13/viper](https://github.com/spf13/viper) (reads `.env`) |
 | Mocks | [vektra/mockery](https://github.com/vektra/mockery) |
-| Linter | [golangci-lint](https://golangci-lint.run/) |
+| Linter | [golangci-lint](https://golangci-lint.run/) v2 |
+| Vulnerabilities | [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) |
 
 ## Quick start
 
@@ -21,19 +22,16 @@ A production-ready Go service skeleton for building HTTP APIs quickly and correc
 # 1. Install dev tools into ./bin/
 make tools
 
-# 2. Vendor dependencies
-make vendor
-
-# 3. Configure environment
+# 2. Configure environment
 cp sample.env .env
 
-# 4. Start Postgres
-docker-compose up -d postgres
+# 3. Start Postgres
+docker compose up -d postgres
 
-# 5. Apply migrations
+# 4. Apply migrations
 make migrate
 
-# 6. Build and run
+# 5. Build and run
 make build
 ./bin/service
 ```
@@ -51,10 +49,12 @@ The service starts on `http://localhost:8080`.
 ## Running with Docker
 
 ```sh
-docker-compose up -d
+make up        # start postgres + service
+make logs      # follow the logs
+make down      # stop the stack
 ```
 
-This builds the service image and starts it alongside Postgres. The service waits for Postgres to be healthy before starting.
+This builds the service image and starts it alongside Postgres. The service waits for Postgres to become healthy before starting, and has a healthcheck of its own against `/health`. `.env` points `PG_HOST` at `127.0.0.1` for host-side tooling; compose overrides it to the `postgres` service name inside the network.
 
 ## Project structure
 
@@ -125,10 +125,35 @@ make migrate-drop                 # drop everything in the database
 ## Development
 
 ```sh
-make full-lint          # goimports + fmt + vet + golangci-lint
-go test ./...           # all tests
-go generate ./internal/pkg/<domain>/...   # regenerate mocks
+make full-lint        # format + lint — run before committing
+make check-format     # non-rewriting format check (what CI runs)
+make vulncheck        # scan dependencies for known vulnerabilities
+make generate-mocks   # regenerate mocks
 ```
+
+### Tests
+
+Repository tests run against a real Postgres. `internal/utils/testdb` applies the
+migrations from `db/migrations` and truncates every table before each test, so
+the test schema is never a second copy of the DDL.
+
+```sh
+make test-db-up        # start just Postgres
+make test-integration  # run the suite against it
+make test-db-down      # stop it
+make test-db-reset     # wipe the data directory and start over
+```
+
+The database files live in `infra/postgres/` (a bind mount, ignored by git), so
+you can see and delete them like any other file. Because it is not a named
+volume, `docker compose down -v` will not reset the database — use
+`make test-db-reset`.
+
+`make test` alone also works: tests needing a database skip themselves when none
+is reachable. `make test-integration` fails instead of skipping, which is what CI
+runs so a missing database can never pass silently.
+
+CI (`.github/workflows/checks.yml`) runs format, lint, vulncheck, test and a Docker image build on every PR.
 
 ## Docs
 
