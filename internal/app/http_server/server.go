@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,6 +18,11 @@ const (
 	defaultReadTimeout  = 10 * time.Second
 	defaultWriteTimeout = 10 * time.Second
 	defaultIdleTimeout  = 60 * time.Second
+
+	// How long in-flight requests get to finish once a signal arrives. It has to
+	// be its own budget: the context that triggers the shutdown is already
+	// canceled, and Shutdown returns immediately on a canceled context.
+	defaultShutdownTimeout = 15 * time.Second
 )
 
 type App struct {
@@ -44,11 +50,28 @@ func (a *App) RunHTTPServer(ctx context.Context, g *errgroup.Group, appPort uint
 	}
 
 	g.Go(func() error {
-		return server.ListenAndServe()
+		// ErrServerClosed is the expected result of a graceful Shutdown, not a
+		// failure — swallow it here so g.Wait() reports only real errors, and
+		// so it cannot mask the shutdown error by arriving first.
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("http server: %w", err)
+		}
+
+		return nil
 	})
 
 	g.Go(func() error {
 		<-ctx.Done()
-		return server.Shutdown(ctx)
+
+		// A fresh context: ctx is already canceled, and Shutdown given a
+		// canceled context returns instantly without draining anything.
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), defaultShutdownTimeout)
+		defer cancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("http server shutdown: %w", err)
+		}
+
+		return nil
 	})
 }

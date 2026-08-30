@@ -6,8 +6,14 @@ import (
 	"time"
 )
 
+// bufferSize keeps the producer a little ahead of the consumers.
+const bufferSize = 10
+
+// workDelay stands in for however long real work would take.
+const workDelay = 500 * time.Millisecond
+
 func producer() chan int {
-	ch := make(chan int, 10)
+	ch := make(chan int, bufferSize)
 
 	go func() {
 		defer close(ch)
@@ -16,7 +22,7 @@ func producer() chan int {
 		for {
 			ch <- i
 			i++
-			time.Sleep(time.Millisecond * 500) // simulate some work being done
+			time.Sleep(workDelay) // simulate some work being done
 		}
 	}()
 
@@ -46,23 +52,19 @@ func main() {
 	ch := producer()
 	a, b := fanOut(ch)
 
-	var wg = sync.WaitGroup{}
+	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for v := range a {
 			println("a:", v)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for v := range b {
 			println("b:", v)
 		}
-	}()
+	})
 
 	wg.Wait()
 

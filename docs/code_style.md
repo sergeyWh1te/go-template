@@ -245,7 +245,7 @@
   }
   ```
 
-  Результат будет в
+  Output will be placed:
 
   ```text
     |        └───pkg

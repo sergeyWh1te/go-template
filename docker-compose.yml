@@ -1,43 +1,73 @@
+# Keep container logs from filling the disk on a long-running local stack.
+x-logging: &default-logging
+  options:
+    max-size: "50m"
+    max-file: "10"
+
 services:
   postgres:
     image: postgres:17-alpine
     hostname: postgres
     container_name: go_template_postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: master
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_USER: ${PG_USERNAME:-postgres}
+      POSTGRES_DB: ${PG_DATABASE:-master}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${PG_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d master"]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USERNAME:-postgres} -d ${PG_DATABASE:-master}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Bind mount, not a named volume: the data is visible in the working tree
+      # at infra/postgres/ and is removed with the directory. PGDATA points at a
+      # subdirectory so Postgres creates it itself with the ownership it needs —
+      # initdb refuses a data directory it does not own.
+      - ./infra/postgres:/var/lib/postgresql/data
     networks:
       - backend
+    logging: *default-logging
 
-  main:
-    container_name: main
-    build: ./
-    restart: always
+  service:
+    image: go-template:stable
+    container_name: go_template_service
+    build:
+      context: ./
+      args:
+        COMMIT: ${COMMIT:-unknown}
+    restart: unless-stopped
     env_file:
       - .env
+    environment:
+      # .env points PG_HOST at 127.0.0.1 for host-side tooling (migrations, psql).
+      # Inside the network that would be the service's own container, so it is
+      # overridden with the compose service name here.
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PORT=8080
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
+    # Must exceed the app's own drain budget (defaultShutdownTimeout, 15s) plus
+    # the database close, or Docker SIGKILLs the container mid-drain and the
+    # graceful shutdown never gets to finish.
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     networks:
       - backend
-
-volumes:
-  postgres_data:
+    logging: *default-logging
 
 networks:
   backend:

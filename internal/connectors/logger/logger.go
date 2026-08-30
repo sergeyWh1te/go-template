@@ -3,32 +3,32 @@ package logger
 import (
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/sergeyWh1te/go-template/internal/env"
 )
 
-func New(cfg *env.AppConfig) (*slog.Logger, error) {
-	level, err := parseLevel(cfg.LogLevel)
-	if err != nil {
-		return nil, err
-	}
+// New builds the application logger. An unset or unrecognized LOG_LEVEL falls
+// back to info rather than failing startup — losing the service over a typo in
+// a log setting is worse than logging at the wrong level.
+func New(cfg *env.AppConfig) *slog.Logger {
+	opts := &slog.HandlerOptions{Level: parseLevel(cfg.LogLevel)}
 
-	opts := &slog.HandlerOptions{Level: level}
-
-	var handler slog.Handler
-	if cfg.LogFormat == "json" {
+	var handler slog.Handler = slog.NewTextHandler(os.Stdout, opts)
+	if strings.EqualFold(cfg.LogFormat, "json") {
 		handler = slog.NewJSONHandler(os.Stdout, opts)
-	} else {
-		handler = slog.NewTextHandler(os.Stdout, opts)
 	}
 
-	return slog.New(handler), nil
+	return slog.New(handler)
 }
 
-func parseLevel(s string) (slog.Level, error) {
+func parseLevel(s string) slog.Level {
 	var level slog.Level
-	if err := level.UnmarshalText([]byte(s)); err != nil {
-		return level, err
+	// UnmarshalText accepts "debug"/"INFO"/"warn"/"error" and also offsets such
+	// as "error+2"; anything else keeps the info default.
+	if err := level.UnmarshalText([]byte(strings.TrimSpace(s))); err != nil {
+		return slog.LevelInfo
 	}
-	return level, nil
+
+	return level
 }

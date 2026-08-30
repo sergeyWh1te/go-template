@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// workDelay stands in for however long real work would take.
+const workDelay = 500 * time.Millisecond
+
 type Store struct {
 	m    sync.RWMutex
 	data string
@@ -16,7 +19,7 @@ func writer1(s *Store) {
 		time.Sleep(time.Millisecond * 1)
 		if s.m.TryLock() {
 			s.data += "1:"
-			time.Sleep(time.Millisecond * 500) // simulate some work being done
+			time.Sleep(workDelay) // simulate some work being done
 			s.m.Unlock()
 		}
 	}
@@ -27,7 +30,7 @@ func writer2(s *Store) {
 		time.Sleep(time.Millisecond * 1)
 		if s.m.TryLock() {
 			s.data += "2:"
-			time.Sleep(time.Millisecond * 500) // simulate some work being done
+			time.Sleep(workDelay) // simulate some work being done
 			s.m.Unlock()
 		}
 	}

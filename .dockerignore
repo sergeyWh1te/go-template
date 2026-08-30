@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+bin
+vendor
+# Local Postgres data — megabytes of runtime state, never part of a build.
+infra
+.env
+.env.*
+*.md
+docs
+coverage.out
