@@ -1,3 +1,16 @@
+## 19.11.2026
+
+1. Mocks: migrated to mockery v3. The `//go:generate ... --name X` directives were v2 syntax that the pinned v3 binary rejects (`unknown flag: --name`); they are replaced by a config-driven `.mockery.yml` (`testify` template, mocks still at `internal/pkg/users/mocks/{Usecase,Repository}.go`, package `mocks`). `make generate-mocks` runs `bin/mockery`. Mocks regenerated — they now come with `NewUsecase(t)`/`NewRepository(t)` constructors that assert expectations on cleanup, and typed `EXPECT()` helpers.
+2. Pinned mockery v3.9.1 (was v3.7.3) and golangci-lint v2.15.0 (was v2.13.2). Both older pins bundle a `golang.org/x/tools` that cannot read Go 1.27.3's export data (*"export data version 5 is greater than maximum supported version 4"*) — mockery failed outright and `make lint` reported spurious `typecheck` errors.
+3. `make imports` no longer rewrites `mocks/`: goimports regrouped the generated imports, so `make full-lint` followed by `make generate-mocks` always produced a diff.
+4. Added `users.ErrNotFound`. The repository's `Get` translates `sql.ErrNoRows` into it (wrapped with the id), returns `nil` with every error instead of a pointer to a zero `User`, and wraps other errors with context; `Create` wraps its error too.
+5. `/example` returned 404 for *every* error, so a database outage looked like a missing user. It now maps `users.ErrNotFound` → 404 `{"error":"user not found"}` (logged at Warn) and anything else → 500 `{"error":"internal server error"}` (logged at Error). Error bodies are JSON instead of `http.Error` plain text.
+6. Added tests: `usecase/usecase_test.go` (mocked `Repository`), `handlers/user_example/handler_test.go` (200/404/500 with a mocked `Usecase`, `httptest`), `handlers/health/health_test.go` and `connectors/logger/logger_test.go` (level parsing and the info fallback).
+7. `make cover` now runs against the database (`TEST_PG_DSN`, like `test-integration`), measures every internal package via `-coverpkg` (minus generated mocks and the testdb fixture) and fails below `COVER_MIN` (30%).
+8. CI: the `test` job runs `make cover`, writes the total to the job summary and uploads `coverage.out` as an artifact; the `docker` job starts the image against a Postgres service container and asserts `/health` answers `{"status":"ok"}`. Workflow validated with actionlint.
+9. Security: `golang.org/x/text` bumped past GO-2026-6629 (panic in `secure/precis`, reachable via pgx). Builder image `golang:1.27.0-alpine3.24` → `golang:1.27.4-alpine3.24` for GO-2026-6859 (net/http MaxBytesReader race, fixed in go1.27.4); every `setup-go` step gets `check-latest: true` so CI never runs a stale cached 1.27.x. No `toolchain` directive in go.mod — goenv refuses to run when that exact version is not installed.
+10. Dependencies: chi v5.5.0, golang-migrate v4.20.1 (library and the `MIGRATE_VERSION` CLI pin), pgx v5.13.0, prometheus/client_golang v1.25.0, x/sync v0.25.0, plus transitive bumps (x/text v0.42.0, x/sys v0.48.0, prometheus/common v0.72.0, protobuf v1.36.12).
+
 ## 30.08.2026
 
 ### Connectors

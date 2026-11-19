@@ -233,11 +233,18 @@
         name: `success_super_duper_test`, -> good
     ```
 
-* **Mocks:** using the approach from [docs](structure.md), where interfaces are located, on any package, you can put a command to generate them
-  while the mocks themselves will be located in `internal/pkg/<some_domain>/mocks`
+* **Mocks:** using the approach from [docs](structure.md), list each interface to mock in `.mockery.yml` (mockery v3,
+  config-driven) and run `make generate-mocks`; the mocks themselves will be located in `internal/pkg/<some_domain>/mocks`
+
+  ```yaml
+  packages:
+    github.com/sergeyWh1te/go-template/internal/pkg/<some_domain>:
+      interfaces:
+        Usecase:
+        Repository:
+  ```
 
   ```go
-  //go:generate ../../../bin/mockery --name Usecase
   type Usecase interface {
   	User(ctx context.Context, UserID int64) (*entity.ChatUser, error)
   	CntActiveItems(ctx context.Context, UserID int64) (*int64, error)

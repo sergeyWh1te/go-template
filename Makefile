@@ -6,10 +6,10 @@ export
 
 POSTGRESQL_URL := postgres://$(PG_USERNAME):$(PG_PASSWORD)@$(PG_HOST):$(PG_PORT)/$(PG_DATABASE)?sslmode=$(PG_SSLMODE)
 
-GOLANGCI_LINT_VERSION := v2.13.2
-MOCKERY_VERSION       := v3.7.3
+GOLANGCI_LINT_VERSION := v2.15.0
+MOCKERY_VERSION       := v3.9.1
 GOIMPORTS_VERSION     := v0.48.0
-MIGRATE_VERSION       := v4.19.1
+MIGRATE_VERSION       := v4.20.1
 GOVULNCHECK_VERSION   := v1.7.0
 GO_MOD_OUTDATED_VERSION := v0.9.0
 
@@ -57,9 +57,11 @@ check-format:
 vet:
 	go vet ./cmd/... ./internal/...
 
+# Generated mocks are skipped: rewriting their import grouping would make
+# `make generate-mocks` produce a diff every time.
 .PHONY: imports
 imports:
-	bin/goimports -local github.com/sergeyWh1te/go-template -w $(shell find ./cmd ./internal -type f -name '*.go')
+	bin/goimports -local github.com/sergeyWh1te/go-template -w $(shell find ./cmd ./internal -type f -name '*.go' -not -path '*/mocks/*')
 
 .PHONY: lint
 lint:
@@ -99,10 +101,23 @@ test-integration:
 test-race:
 	go test -race ./cmd/... ./internal/...
 
+# Coverage over unit + database tests, so it needs the database like
+# test-integration does (CI runs this target). -coverpkg measures every internal
+# package, not just the ones that have tests — an untested package counts as 0%
+# instead of disappearing from the total. Generated mocks and the testdb fixture
+# are test scaffolding, not product code, so they are left out.
+# COVER_MIN is a floor, not a goal: the composition root, connectors and env are
+# only exercised by the Docker /health smoke test, which go test cannot see.
+# Raise it as tests are added; never lower it to make a change pass.
+COVER_MIN ?= 30
+COVER_PKGS = $(shell go list ./internal/... | grep -v -e /mocks -e /utils/testdb | paste -sd, -)
+
 .PHONY: cover
 cover:
-	go test -coverprofile=coverage.out ./cmd/... ./internal/...
-	go tool cover -func=coverage.out | tail -1
+	TEST_PG_DSN="$(TEST_PG_DSN)" go test -count=1 -coverpkg=$(COVER_PKGS) -coverprofile=coverage.out ./cmd/... ./internal/...
+	@go tool cover -func=coverage.out | tail -1
+	@go tool cover -func=coverage.out | awk -v min=$(COVER_MIN) '/^total:/ { sub("%", "", $$3); \
+		if ($$3 + 0 < min) { printf "coverage %s%% is below COVER_MIN=%s%%\n", $$3, min; exit 1 } }'
 
 # Just the database, without the service — what the tests need locally.
 .PHONY: test-db-up
@@ -129,7 +144,7 @@ test-db-reset:
 ### Mocks
 .PHONY: generate-mocks
 generate-mocks:
-	go generate ./internal/...
+	bin/mockery --config=.mockery.yml
 
 ### Migrations
 .PHONY: migrate

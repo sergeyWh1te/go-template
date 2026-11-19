@@ -100,9 +100,11 @@ go-template/
 ## Adding a new domain
 
 1. Create `internal/pkg/<your_domain>/` following the `users` package as a reference:
-   - Define `Usecase` and `Repository` interfaces with `//go:generate` directives
+   - Define `Usecase` and `Repository` interfaces and add them to `.mockery.yml`
+   - Define domain errors (e.g. `ErrNotFound`) in `errors.go`; the repository translates driver errors into them
    - Implement them in `usecase/usecase.go` and `repository/repository.go`
    - Put domain structs in `entity/`
+   - Run `make generate-mocks`
 
 2. Register the new repo and usecase in `internal/app/http_server/repository.go` and `usecase.go`.
 
