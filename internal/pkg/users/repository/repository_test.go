@@ -2,10 +2,10 @@ package repository_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
+	"github.com/sergeyWh1te/go-template/internal/pkg/users"
 	"github.com/sergeyWh1te/go-template/internal/pkg/users/repository"
 	"github.com/sergeyWh1te/go-template/internal/utils/testdb"
 )
@@ -50,13 +50,17 @@ func TestRepository_Get_returns_the_created_user(t *testing.T) {
 	}
 }
 
-func TestRepository_Get_missing_user_returns_ErrNoRows(t *testing.T) {
+func TestRepository_Get_missing_user_returns_ErrNotFound(t *testing.T) {
 	db := testdb.New(t)
 	repo := repository.New(db)
 
-	_, err := repo.Get(context.Background(), 404)
-	if !errors.Is(err, sql.ErrNoRows) {
-		t.Fatalf("expected sql.ErrNoRows for a missing user, got %v", err)
+	user, err := repo.Get(context.Background(), 404)
+	if !errors.Is(err, users.ErrNotFound) {
+		t.Fatalf("expected users.ErrNotFound for a missing user, got %v", err)
+	}
+
+	if user != nil {
+		t.Errorf("expected a nil user alongside the error, got %+v", user)
 	}
 }
 

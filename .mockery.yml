@@ -1,0 +1,14 @@
+# mockery v3 config — `make generate-mocks` runs `bin/mockery` with this file.
+# To mock a new interface, add it under its package below.
+template: testify
+formatter: goimports
+force-file-write: true
+dir: "{{.InterfaceDir}}/mocks"
+filename: "{{.InterfaceName}}.go"
+pkgname: mocks
+structname: "{{.InterfaceName}}"
+packages:
+  github.com/sergeyWh1te/go-template/internal/pkg/users:
+    interfaces:
+      Usecase:
+      Repository:
